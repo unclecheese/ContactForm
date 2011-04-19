@@ -27,7 +27,33 @@ class ContactFormControls extends Extension
 		}
 
 		else {
-			if($form->hasNewsletter()) {
+			
+			$this->sendEmail($data,$form);
+			
+			if($func = $form->getOnAfterSend()) {
+			   if(Controller::curr()->hasMethod($func)) {
+			     Controller::curr()->$func($data,$form);
+			   }
+			}
+
+			if($form->getSuccessURL())
+				Director::redirect($form->getSuccessURL());
+			else {
+				if(Director::is_ajax())
+					die($form->getSuccessMessage());
+				elseif(!$form->removeFormOnSuccess())
+					$form->sessionMessage(strip_tags($form->getSuccessMessage()), 'good');
+				Director::redirect(Controller::curr()->Link()."?success=1");
+			}
+		}
+	
+
+	}
+	
+	public function sendEmail($data,$form) 
+	{
+		
+		if($form->hasNewsletter()) {
 				$newsletters = $form->getNewsletters();
 				for($i = 0; $i < sizeof($newsletters);$i++) {
 					if(isset($_POST['Newsletters'][$i]) && $_POST['Newsletters'][$i] == $i) {
@@ -61,7 +87,7 @@ class ContactFormControls extends Extension
 						foreach($value as $v)
 							$answers->push(new ArrayData(array('Value' => $v)));
 						$answers->Checkboxes = true;
-						$fields->push(new ArrayData(array('Label' => $field->Title(), 'Value' => $answers)));
+						$fields->push(new ArrayData(array('Label' => $field->Title(), 'Values' => $answers)));
 					}			
 					else
 						$title = $field->Title() ? $field->Title() : $field->Name();
@@ -89,24 +115,6 @@ class ContactFormControls extends Extension
 		   }
 			}
 			
-			if($func = $form->getOnAfterSend()) {
-			   if(Controller::curr()->hasMethod($func)) {
-			     Controller::curr()->$func($data,$form);
-			   }
-			}
-
-			if($form->getSuccessURL())
-				Director::redirect($form->getSuccessURL());
-			else {
-				if(Director::is_ajax())
-					die($form->getSuccessMessage());
-				elseif(!$form->removeFormOnSuccess())
-					$form->sessionMessage(strip_tags($form->getSuccessMessage()), 'good');
-				Director::redirect(Controller::curr()->Link()."?success=1");
-			}
-		}
-	
-
 	}
 	
 	public function IsSuccess()

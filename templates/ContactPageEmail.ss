@@ -10,10 +10,10 @@ $IntroText
 </p>
 <p class="body">
 <% control Fields %>
-	<% if Value.Checkboxes %>
+	<% if Values %>
 		<strong>$Label</strong>:<br />
 		<ul>
-			<% control Value %>
+			<% control Values %>
 				<li>$Value</li>
 			<% end_control %>
 		</ul>
