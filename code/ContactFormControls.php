@@ -74,10 +74,14 @@ class ContactFormControls extends Extension
 			$email->from = (isset($data['Email']) && !empty($data['Email'])) ? $data['Email'] : $form->getFrom();
 			$email->ss_template = 'ContactPageEmail';
 			$fields = new DataObjectSet();
+			$uploadedFiles = array();
 			foreach($form->Fields()->dataFields() as $field) {
 				if(!in_array($field->Name(), $form->getOmittedFields())) {
 					if($field instanceof CheckboxField) {
 						$value = $field->value ? "Yes" : "No";
+					}
+					else if($field instanceof UploadifyField) {
+					    $uploadedFiles[] = $field->Value();
 					}
 					else {
 						$value = nl2br($field->Value());
@@ -100,20 +104,19 @@ class ContactFormControls extends Extension
 				'Fields' => $fields,
 				'Domain' => Director::protocolAndHost()
 			)));
-		  if(isset($_POST['uploaded_files']) && is_array($_POST['uploaded_files'])) {
-       foreach($_POST['uploaded_files'] as $file_id) {
-			   if($file = DataObject::get_by_id("File",$file_id))
-		      $email->attachFile(Director::baseFolder() . "/" . $file->Filename, basename($file->Filename));
-		   }
+			if (isset($_POST['uploaded_files'])) {
+			    $uploadedFiles = array_merge($_POST['uploaded_files'], $uploadedFiles);
+			}
+			foreach($uploadedFiles as $file_id) {
+			    if($file = DataObject::get_by_id("File",$file_id))
+			    $email->attachFile(Director::baseFolder() . "/" . $file->Filename, basename($file->Filename));
 			}
 			
 			$email->send();
-		  if(isset($_POST['uploaded_files']) && is_array($_POST['uploaded_files'])) {
-       foreach($_POST['uploaded_files'] as $file_id) {
-			   if($file = DataObject::get_by_id("File",$file_id))
-		      $file->delete();
-		   }
-			}
+            foreach($uploadedFiles as $file_id) {
+		        if($file = DataObject::get_by_id("File",$file_id))
+	            $file->delete();
+	        }
 			
 	}
 	
